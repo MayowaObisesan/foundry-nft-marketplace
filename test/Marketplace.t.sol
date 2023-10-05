@@ -241,11 +241,14 @@ contract MarketPlaceTest is Helpers {
 
         mPlace.executeListing{value: l.price}(lId);
 
+        uint256 userABalanceAfter = userA.balance;
+
         Marketplace.Listing memory t = mPlace.getListing(lId);
         assertEq(t.price, 1 ether);
         assertEq(t.active, false);
 
         assertEq(t.active, false);
         assertEq(ERC721(l.token).ownerOf(l.tokenId), userB);
+        assertEq(userABalanceAfter, userABalanceBefore + l.price);
     }
 }
