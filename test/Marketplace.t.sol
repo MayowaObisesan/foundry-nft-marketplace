@@ -36,7 +36,6 @@ contract MarketPlaceTest is Helpers {
             active: false
         });
 
-        // mint NFT
         nft.mint(userA, 1);
     }
 
