@@ -23,8 +23,6 @@ contract Marketplace {
     /* ERRORS */
     error NotOwner();
     error NotApproved();
-    // error AddressZero();
-    // error NoCode();
     error MinPriceTooLow();
     error DeadlineTooSoon();
     error MinDurationNotMet();
@@ -48,8 +46,6 @@ contract Marketplace {
         if (ERC721(l.token).ownerOf(l.tokenId) != msg.sender) revert NotOwner();
         if (!ERC721(l.token).isApprovedForAll(msg.sender, address(this)))
             revert NotApproved();
-        // if (l.token == address(0)) revert AddressZero();
-        // if (l.token.code.length == 0) revert NoCode();
         if (l.price < 0.01 ether) revert MinPriceTooLow();
         if (l.deadline < block.timestamp) revert DeadlineTooSoon();
         if (l.deadline - block.timestamp < 60 minutes)
