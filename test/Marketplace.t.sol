@@ -54,14 +54,6 @@ contract MarketPlaceTest is Helpers {
         mPlace.createListing(l);
     }
 
-    /*function testNonAddressZero() public {
-        switchSigner(userA);
-        nft.setApprovalForAll(address(mPlace), true);
-        l.token = address(0);
-        vm.expectRevert(Marketplace.AddressZero.selector);
-        mPlace.createListing(l);
-    }*/
-
     function testMinPriceTooLow() public {
         switchSigner(userA);
         nft.setApprovalForAll(address(mPlace), true);
