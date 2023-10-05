@@ -45,8 +45,7 @@ contract Marketplace {
     }
 
     function createListing(Listing calldata l) public returns (uint256 lId) {
-        if (ERC721(l.token).ownerOf(l.tokenId) != msg.sender)
-            revert NotApproved();
+        if (ERC721(l.token).ownerOf(l.tokenId) != msg.sender) revert NotOwner();
         if (!ERC721(l.token).isApprovedForAll(msg.sender, address(this)))
             revert NotApproved();
         // if (l.token == address(0)) revert AddressZero();
@@ -58,7 +57,7 @@ contract Marketplace {
 
         // Assert signature
         if (
-            SignUtils.isValid(
+            !SignUtils.isValid(
                 SignUtils.constructMessageHash(
                     l.token,
                     l.tokenId,
@@ -93,6 +92,7 @@ contract Marketplace {
         Listing storage listing = listings[_listingId];
         if (listing.deadline < block.timestamp) revert ListingExpired();
         if (!listing.active) revert ListingNotActive();
+        if (listing.price < msg.value) revert PriceMismatch(listing.price);
         if (listing.price != msg.value)
             revert PriceNotMet(int256(listing.price) - int256(msg.value));
 

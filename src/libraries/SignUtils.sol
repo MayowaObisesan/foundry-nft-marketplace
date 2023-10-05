@@ -9,7 +9,10 @@ library SignUtils {
         uint88 _deadline,
         address _seller
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_token, _tokenId));
+        return
+            keccak256(
+                abi.encodePacked(_token, _tokenId, _price, _deadline, _seller)
+            );
     }
 
     function isValid(
@@ -20,6 +23,9 @@ library SignUtils {
         bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
         return recoverSigner(ethSignedMessageHash, signature) == signer;
+        // return
+        //     recoverSigner(ethSignedMessageHash, signature) ==
+        //     address(uint160(signer));
     }
 
     function getEthSignedMessageHash(
