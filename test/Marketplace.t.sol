@@ -76,7 +76,7 @@ contract MarketPlaceTest is Helpers {
         mPlace.createOrder(order);
     }
 
-    function testSignatureValid() public {
+    function testSignatureNotValid() public {
         // Test that signature is valid
         switchSigner(userA);
         nft.setApprovalForAll(address(mPlace), true);
@@ -113,11 +113,11 @@ contract MarketPlaceTest is Helpers {
             privKeyA
         );
         // vm.expectRevert(Marketplace.OrderNotExistent.selector);
-        uint256 lId = mPlace.createOrder(order);
+        uint256 newOrderId = mPlace.createOrder(order);
 
         switchSigner(userB);
         vm.expectRevert(Marketplace.NotOwner.selector);
-        mPlace.editOrder(lId, 0, false);
+        mPlace.editOrder(newOrderId, 0, false);
     }
 
     function testEditOrder() public {
@@ -132,10 +132,10 @@ contract MarketPlaceTest is Helpers {
             order.owner,
             privKeyA
         );
-        uint256 lId = mPlace.createOrder(order);
-        mPlace.editOrder(lId, 0.01 ether, false);
+        uint256 newOrderId = mPlace.createOrder(order);
+        mPlace.editOrder(newOrderId, 0.01 ether, false);
 
-        Marketplace.Order memory _order = mPlace.getOrder(lId);
+        Marketplace.Order memory _order = mPlace.getOrder(newOrderId);
         assertEq(_order.price, 0.01 ether);
         assertEq(_order.active, false);
     }
@@ -164,11 +164,11 @@ contract MarketPlaceTest is Helpers {
             order.owner,
             privKeyA
         );
-        uint256 lId = mPlace.createOrder(order);
-        mPlace.editOrder(lId, 0.01 ether, false);
+        uint256 newOrderId = mPlace.createOrder(order);
+        mPlace.editOrder(newOrderId, 0.01 ether, false);
         switchSigner(userB);
         vm.expectRevert(Marketplace.OrderNotActive.selector);
-        mPlace.executeOrder(lId);
+        mPlace.executeOrder(newOrderId);
     }
 
     function testFulfilOrderPriceNotEqual() public {
@@ -183,7 +183,7 @@ contract MarketPlaceTest is Helpers {
             order.owner,
             privKeyA
         );
-        uint256 lId = mPlace.createOrder(order);
+        uint256 newOrderId = mPlace.createOrder(order);
         switchSigner(userB);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -191,7 +191,7 @@ contract MarketPlaceTest is Helpers {
                 order.price - 0.9 ether
             )
         );
-        mPlace.executeOrder{value: 0.9 ether}(lId);
+        mPlace.executeOrder{value: 0.9 ether}(newOrderId);
     }
 
     function testFulfilOrderPriceMismatch() public {
@@ -206,7 +206,7 @@ contract MarketPlaceTest is Helpers {
             order.owner,
             privKeyA
         );
-        uint256 lId = mPlace.createOrder(order);
+        uint256 newOrderId = mPlace.createOrder(order);
         switchSigner(userB);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -214,7 +214,7 @@ contract MarketPlaceTest is Helpers {
                 order.price
             )
         );
-        mPlace.executeOrder{value: 1.1 ether}(lId);
+        mPlace.executeOrder{value: 1.1 ether}(newOrderId);
     }
 
     function testFulfilOrder() public {
@@ -229,15 +229,15 @@ contract MarketPlaceTest is Helpers {
             order.owner,
             privKeyA
         );
-        uint256 lId = mPlace.createOrder(order);
+        uint256 newOrderId = mPlace.createOrder(order);
         switchSigner(userB);
         uint256 userABalanceBefore = userA.balance;
 
-        mPlace.executeOrder{value: order.price}(lId);
+        mPlace.executeOrder{value: order.price}(newOrderId);
 
         uint256 userABalanceAfter = userA.balance;
 
-        Marketplace.Order memory _order = mPlace.getOrder(lId);
+        Marketplace.Order memory _order = mPlace.getOrder(newOrderId);
         assertEq(_order.price, 1 ether);
         assertEq(_order.active, false);
 
