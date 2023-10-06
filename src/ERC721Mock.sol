@@ -7,7 +7,7 @@ contract OurNFT is ERC721("OurNFT", "ONFT") {
     function tokenURI(
         uint256 id
     ) public view virtual override returns (string memory) {
-        return "Scam";
+        return "base-marketplace";
     }
 
     function mint(address recipient, uint256 tokenId) public payable {

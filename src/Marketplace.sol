@@ -5,20 +5,20 @@ import "solmate/tokens/ERC721.sol";
 import {SignUtils} from "./libraries/SignUtils.sol";
 
 contract Marketplace {
-    struct Listing {
+    struct Order {
         address token;
         uint256 tokenId;
         uint256 price;
-        bytes sig;
+        bytes signature;
         // Slot 4
         uint88 deadline;
-        address lister;
+        address owner;
         bool active;
     }
 
-    mapping(uint256 => Listing) public listings;
+    mapping(uint256 => Order) public orders;
     address public admin;
-    uint256 public listingId;
+    uint256 public orderId;
 
     /* ERRORS */
     error NotOwner();
@@ -27,22 +27,20 @@ contract Marketplace {
     error DeadlineTooSoon();
     error MinDurationNotMet();
     error InvalidSignature();
-    error ListingNotExistent();
-    error ListingNotActive();
+    error OrderNotExistent();
+    error OrderNotActive();
     error PriceNotMet(int256 difference);
-    error ListingExpired();
+    error OrderExpired();
     error PriceMismatch(uint256 originalPrice);
 
     /* EVENTS */
-    event ListingCreated(uint256 indexed listingId, Listing);
-    event ListingExecuted(uint256 indexed listingId, Listing);
-    event ListingEdited(uint256 indexed listingId, Listing);
+    event OrderCreated(uint256 indexed orderId, Order);
+    event OrderExecuted(uint256 indexed orderId, Order);
+    event OrderEdited(uint256 indexed orderId, Order);
 
-    constructor() {
-        admin = msg.sender;
-    }
+    constructor() {}
 
-    function createListing(Listing calldata l) public returns (uint256 lId) {
+    function createOrder(Order calldata l) public returns (uint256 lId) {
         if (ERC721(l.token).ownerOf(l.tokenId) != msg.sender) revert NotOwner();
         if (!ERC721(l.token).isApprovedForAll(msg.sender, address(this)))
             revert NotApproved();
@@ -59,74 +57,72 @@ contract Marketplace {
                     l.tokenId,
                     l.price,
                     l.deadline,
-                    l.lister
+                    l.owner
                 ),
-                l.sig,
+                l.signature,
                 msg.sender
             )
         ) revert InvalidSignature();
 
         // append to Storage
-        Listing storage li = listings[listingId];
+        Order storage li = orders[orderId];
         li.token = l.token;
         li.tokenId = l.tokenId;
         li.price = l.price;
-        li.sig = l.sig;
+        li.signature = l.signature;
         li.deadline = uint88(l.deadline);
-        li.lister = msg.sender;
+        li.owner = msg.sender;
         li.active = true;
 
         // Emit event
-        emit ListingCreated(listingId, l);
-        lId = listingId;
-        listingId++;
+        emit OrderCreated(orderId, l);
+        lId = orderId;
+        orderId++;
         return lId;
     }
 
-    function executeListing(uint256 _listingId) public payable {
-        if (_listingId >= listingId) revert ListingNotExistent();
-        Listing storage listing = listings[_listingId];
-        if (listing.deadline < block.timestamp) revert ListingExpired();
-        if (!listing.active) revert ListingNotActive();
-        if (listing.price < msg.value) revert PriceMismatch(listing.price);
-        if (listing.price != msg.value)
-            revert PriceNotMet(int256(listing.price) - int256(msg.value));
+    function executeOrder(uint256 _orderId) public payable {
+        if (_orderId >= orderId) revert OrderNotExistent();
+        Order storage order = orders[_orderId];
+        if (order.deadline < block.timestamp) revert OrderExpired();
+        if (!order.active) revert OrderNotActive();
+        if (order.price < msg.value) revert PriceMismatch(order.price);
+        if (order.price != msg.value)
+            revert PriceNotMet(int256(order.price) - int256(msg.value));
 
         // Update state
-        listing.active = false;
+        order.active = false;
 
         // transfer
-        ERC721(listing.token).transferFrom(
-            listing.lister,
+        ERC721(order.token).transferFrom(
+            order.owner,
             msg.sender,
-            listing.tokenId
+            order.tokenId
         );
 
         // transfer eth
-        payable(listing.lister).transfer(listing.price);
+        payable(order.owner).transfer(order.price);
 
         // Update storage
-        emit ListingExecuted(_listingId, listing);
+        emit OrderExecuted(_orderId, order);
     }
 
-    function editListing(
-        uint256 _listingId,
+    function editOrder(
+        uint256 _orderId,
         uint256 _newPrice,
         bool _active
     ) public {
-        if (_listingId >= listingId) revert ListingNotExistent();
-        Listing storage listing = listings[_listingId];
-        if (listing.lister != msg.sender) revert NotOwner();
-        listing.price = _newPrice;
-        listing.active = _active;
-        emit ListingEdited(_listingId, listing);
+        if (_orderId >= orderId) revert OrderNotExistent();
+        Order storage order = orders[_orderId];
+        if (order.owner != msg.sender) revert NotOwner();
+        order.price = _newPrice;
+        order.active = _active;
+        emit OrderEdited(_orderId, order);
     }
 
-    // add getter for listing
-    function getListing(
-        uint256 _listingId
-    ) public view returns (Listing memory) {
-        // if (_listingId >= listingId)
-        return listings[_listingId];
+    // add getter for order
+    function getOrder(uint256 _orderId) public view returns (Order memory) {
+        // if (_orderId >= orderId)
+        return orders[_orderId];
     }
 }
